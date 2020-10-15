@@ -1773,7 +1773,7 @@ tslang@^0.1.22:
   resolved "https://registry.npm.taobao.org/tslang/download/tslang-0.1.22.tgz#df8260690037043e6a8a7ad8e55d9bf0e0767565"
   integrity sha1-34JgaQA3BD5qinrY5V2b8OB2dWU=
 
-tslib@^1.8.1:
+tslib@^1.8.0, tslib@^1.8.1:
   version "1.14.1"
   resolved "https://registry.npm.taobao.org/tslib/download/tslib-1.14.1.tgz?cache=0&sync_timestamp=1602286730817&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Ftslib%2Fdownload%2Ftslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha1-zy04vcNKE0vK8QkcQfZhni9nLQA=
@@ -1857,6 +1857,13 @@ verror@1.10.0:
     assert-plus "^1.0.0"
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
+
+villa@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/villa/-/villa-0.3.2.tgz#d4632f9fe97f888c79f25784c28c8fa41fb9b1d5"
+  integrity sha512-u5k95fNoQugxWcS7Yj29BMf00gdx7rZvXVCVn2iWO2iZpeTsjmjmPtkRd0cpCqjpI/0YxVvde3472ndPQ6TemA==
+  dependencies:
+    tslib "^1.8.0"
 
 which@^2.0.1:
   version "2.0.2"

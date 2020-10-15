@@ -1,3 +1,5 @@
+import * as v from 'villa';
+
 import {OCR} from './@ocr';
 import {
   checkAmount,
@@ -8,6 +10,19 @@ import {
   checkShop,
   checkType,
 } from './@utils';
+
+function lock(
+  target: any,
+  propertyKey: string,
+  descriptor: PropertyDescriptor,
+): void {
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  let fn: Function = target[propertyKey];
+
+  descriptor.value = async function (...args: any[]) {
+    return v.lock(TakeawayOCR.name, fn.bind(this, ...args));
+  };
+}
 
 export type TakeawayChecker = (
   takeaway: Takeaway,
@@ -31,6 +46,7 @@ export class TakeawayOCR {
     this.ocr = new OCR(id, key, secret);
   }
 
+  @lock
   async match(urls: string[]): Promise<Takeaway | undefined> {
     const defaultTakeaway: Takeaway = {
       type: undefined,
