@@ -40,7 +40,7 @@ export interface Takeaway {
 }
 
 export class TakeawayOCR {
-  ocr: OCR;
+  private ocr: OCR;
 
   constructor(id: string, key: string, secret: string) {
     this.ocr = new OCR(id, key, secret);
@@ -79,7 +79,7 @@ export class TakeawayOCR {
         return defaultTakeaway;
       }
 
-      let words = await this.ocr.get(url, /^https?:\/\/([\w-]+.)+/.test(url));
+      let words = await this.ocr.get(url);
 
       if (!words?.length) {
         continue;
