@@ -1,11 +1,12 @@
 {
   "name": "takeaway-ocr",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "license": "MIT",
   "author": "boenfu",
   "main": "bld/library/index.js",
   "types": "bld/library/index.d.ts",
   "scripts": {
+    "prepublishOnly": "yarn build",
     "build": "rimraf ./bld && tsc --build",
     "watch": "tsc --build --watch",
     "lint": "eslint .",
