@@ -101,41 +101,46 @@ export class TakeawayOCR {
       }
     };
 
-    for (let url of urls) {
-      if (isComplete(defaultTakeaway)) {
+    while (true) {
+      nextCheckers = [];
+
+      for (let url of urls) {
+        if (isComplete(defaultTakeaway)) {
+          return defaultTakeaway;
+        }
+
+        let words = await this.ocr.get(url, {
+          type: accurate ? 'accurate' : 'general',
+        });
+
+        if (!words?.length) {
+          continue;
+        }
+
+        for (let word of words) {
+          let checkers = [...nextCheckers];
+          nextCheckers = [];
+
+          runCheckers(word, [
+            ...checkers,
+            checkType,
+            checkShop,
+            checkOrderId,
+            checkOrderDate,
+            checkAmount,
+            checkComment,
+            checkScore,
+          ]);
+        }
+      }
+
+      if (!isComplete(defaultTakeaway) && !accurate && fallbackAccurate) {
+        accurate = true;
+        fallbackAccurate = false;
+      } else {
         return defaultTakeaway;
       }
-
-      let words = await this.ocr.get(url, {
-        type: accurate ? 'accurate' : 'general',
-      });
-
-      if (!words?.length) {
-        continue;
-      }
-
-      for (let word of words) {
-        let checkers = [...nextCheckers];
-        nextCheckers = [];
-
-        runCheckers(word, [
-          ...checkers,
-          checkType,
-          checkShop,
-          checkOrderId,
-          checkOrderDate,
-          checkAmount,
-          checkComment,
-          checkScore,
-        ]);
-      }
     }
-
-    if (!isComplete(defaultTakeaway) && !accurate && fallbackAccurate) {
-      return this.match(urls, true, false);
-    }
-
-    return defaultTakeaway;
   }
 }
 
