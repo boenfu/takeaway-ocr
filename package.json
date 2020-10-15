@@ -3,13 +3,18 @@
   "version": "0.0.0",
   "license": "MIT",
   "author": "boenfu",
+  "main": "bld/library/index.js",
+  "types": "bld/library/index.d.ts",
   "scripts": {
     "build": "rimraf ./bld && tsc --build",
+    "watch": "tsc --build --watch",
     "lint": "eslint .",
     "lint-prettier": "prettier --check .",
     "test": "yarn lint-prettier && yarn build && yarn lint"
   },
   "dependencies": {
+    "@types/node": "^14.11.8",
+    "baidu-aip-sdk": "^2.4.6",
     "tslib": "^2.0.3"
   },
   "devDependencies": {
