@@ -2,6 +2,11 @@ import fs from 'fs';
 
 import {ocr as AipOcrClient} from 'baidu-aip-sdk';
 
+export interface OCRGetOptions {
+  type: 'general' | 'accurate';
+  retryTimes?: number;
+}
+
 /**
  * 文档链接：https://cloud.baidu.com/doc/OCR/s/Ek3h7ycyg
  */
@@ -12,9 +17,12 @@ export class OCR {
     this.client = new AipOcrClient(id, key, secret);
   }
 
-  async get(url: string, retryTimes = 3): Promise<string[]> {
+  async get(
+    url: string,
+    {type, retryTimes = 3}: OCRGetOptions,
+  ): Promise<string[]> {
     try {
-      const result: any = (await this.request(url)) ?? {};
+      const result: any = (await this[type](url)) ?? {};
 
       if ('error_code' in result) {
         let code!: number;
@@ -34,7 +42,7 @@ export class OCR {
             message,
           },
           url,
-          retryTimes,
+          {type, retryTimes},
         );
       }
 
@@ -43,7 +51,7 @@ export class OCR {
       // Fix sometime not work
       if (error.code === 'ETIMEDOUT') {
         logger(error);
-        return this.errorHandler(error, url, retryTimes);
+        return this.errorHandler(error, url, {type, retryTimes});
       }
 
       return Promise.reject({
@@ -53,7 +61,7 @@ export class OCR {
     }
   }
 
-  private async request<TResult>(url: string): Promise<TResult> {
+  private async general<TResult>(url: string): Promise<TResult> {
     if (/^https?:\/\/([\w-]+.)+/.test(url)) {
       return this.client.generalBasicUrl(url);
     }
@@ -61,6 +69,16 @@ export class OCR {
     let image = loadLocalImage(url);
 
     return this.client.generalBasic(image);
+  }
+
+  private async accurate<TResult>(url: string): Promise<TResult> {
+    if (/^https?:\/\/([\w-]+.)+/.test(url)) {
+      return this.client.accurateBasicUrl(url);
+    }
+
+    let image = loadLocalImage(url);
+
+    return this.client.accurateBasic(image);
   }
 
   private async errorHandler(
@@ -72,13 +90,18 @@ export class OCR {
       message: string;
     },
     url: string,
-    times: number,
+    {type, retryTimes}: Required<OCRGetOptions>,
   ): Promise<any> {
     // qps limit
     if (code === 18) {
       return new Promise(resolve => {
         setTimeout(() => {
-          resolve(this.get(url, times - 1));
+          resolve(
+            this.get(url, {
+              type,
+              retryTimes: retryTimes - 1,
+            }),
+          );
         }, 500);
       });
     }

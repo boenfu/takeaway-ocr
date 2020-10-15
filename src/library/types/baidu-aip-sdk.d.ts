@@ -3,6 +3,8 @@ declare module 'baidu-aip-sdk' {
   class ocr {
     generalBasic: any;
     generalBasicUrl: any;
+    accurateBasic: any;
+    accurateBasicUrl: any;
 
     constructor(id: string, key: string, secret: string);
   }

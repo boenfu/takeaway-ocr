@@ -39,15 +39,42 @@ export interface Takeaway {
   score?: number;
 }
 
+export interface TakeawayOCROptions {
+  /**
+   * 使用高精度匹配，默认 false
+   */
+  accurate?: boolean;
+  /**
+   * 信息匹配完全时，重新使用高精度，默认 true
+   */
+  fallbackAccurate?: boolean;
+}
+
 export class TakeawayOCR {
   private ocr: OCR;
+  private options: Required<TakeawayOCROptions>;
 
-  constructor(id: string, key: string, secret: string) {
+  constructor(
+    id: string,
+    key: string,
+    secret: string,
+    options?: TakeawayOCROptions,
+  ) {
     this.ocr = new OCR(id, key, secret);
+
+    this.options = {
+      accurate: false,
+      fallbackAccurate: true,
+      ...options,
+    };
   }
 
   @lock
-  async match(urls: string[]): Promise<Takeaway | undefined> {
+  async match(
+    urls: string[],
+    accurate = this.options.accurate,
+    fallbackAccurate = this.options.fallbackAccurate,
+  ): Promise<Takeaway | undefined> {
     const defaultTakeaway: Takeaway = {
       type: undefined,
       shop: undefined,
@@ -79,7 +106,9 @@ export class TakeawayOCR {
         return defaultTakeaway;
       }
 
-      let words = await this.ocr.get(url);
+      let words = await this.ocr.get(url, {
+        type: accurate ? 'accurate' : 'general',
+      });
 
       if (!words?.length) {
         continue;
@@ -100,6 +129,10 @@ export class TakeawayOCR {
           checkScore,
         ]);
       }
+    }
+
+    if (!isComplete(defaultTakeaway) && !accurate && fallbackAccurate) {
+      return this.match(urls, true, false);
     }
 
     return defaultTakeaway;
