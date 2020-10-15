@@ -63,10 +63,13 @@ export class TakeawayOCR {
         return defaultTakeaway;
       }
 
-      for (let word of await this.ocr.get(
-        url,
-        /^https?:\/\/([\w-]+.)+/.test(url),
-      )) {
+      let words = await this.ocr.get(url, /^https?:\/\/([\w-]+.)+/.test(url));
+
+      if (!words?.length) {
+        continue;
+      }
+
+      for (let word of words) {
         let checkers = [...nextCheckers];
         nextCheckers = [];
 
