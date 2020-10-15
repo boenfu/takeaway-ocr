@@ -1,6 +1,6 @@
 import {TakeawayChecker} from '../takeaway';
 
-const meituanKeysSet = new Set(['商家已接单', '订单已完成']);
+const meituanKeysSet = new Set(['商家已接单', '订单已完成', '订单详情']);
 const eleFlag = '我的评价';
 
 const extraTextReg = (str: string): string =>
@@ -17,7 +17,7 @@ export const checkShop: TakeawayChecker = (takeaway, word) => {
     };
   } else if (word.includes(eleFlag)) {
     return (takeaway, word) => {
-      if (word.includes('配送信息')) {
+      if (word.includes('配送信息') || word.startsWith('已贡献')) {
         return;
       }
 

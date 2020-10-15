@@ -2,6 +2,7 @@ import {TakeawayChecker} from '../takeaway';
 
 const meituanFlag = '口味:';
 const meituanFlag2 = '自己會';
+const meituanFlag3 = '骑手:';
 const eleFlag = '味道★';
 
 export const checkComment: TakeawayChecker = (takeaway, word) => {
@@ -9,7 +10,11 @@ export const checkComment: TakeawayChecker = (takeaway, word) => {
     return;
   }
 
-  if (word.startsWith(meituanFlag) || word.startsWith(meituanFlag2)) {
+  if (
+    word.startsWith(meituanFlag) ||
+    word.startsWith(meituanFlag2) ||
+    word.startsWith(meituanFlag3)
+  ) {
     return (takeaway, word) => {
       takeaway.comment = word;
 

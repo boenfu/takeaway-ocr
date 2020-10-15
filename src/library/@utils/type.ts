@@ -20,6 +20,8 @@ const meiTuanKeysSet = new Set([
   '美团红包',
   '美团快送',
   '通话录音,服务护航',
+  '美团外卖客服',
+  '配送服务由美团快送提供配送服务',
 ]);
 
 function isMeiTuan(str: string): boolean {
