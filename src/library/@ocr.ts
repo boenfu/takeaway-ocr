@@ -3,6 +3,8 @@ import http from 'http';
 
 import {ocr as AipOcrClient} from 'baidu-aip-sdk';
 
+import {logger} from './@utils';
+
 export interface OCRGetOptions {
   type: 'general' | 'accurate';
   retryTimes?: number;
@@ -142,9 +144,4 @@ function loadRemoteImage(imagePath: string): Promise<string> {
       });
     });
   });
-}
-
-function logger(error: any): void {
-  // eslint-disable-next-line no-console
-  console.log(`[${Date.now().toString()}]`, error);
 }

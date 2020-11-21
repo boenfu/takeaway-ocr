@@ -1,5 +1,6 @@
 import * as v from 'villa';
 
+import {NLP} from './@nlp';
 import {OCR} from './@ocr';
 import {
   checkAmount,
@@ -24,11 +25,6 @@ function lock(
   };
 }
 
-export type TakeawayChecker = (
-  takeaway: Takeaway,
-  word: string,
-) => TakeawayChecker | true | void;
-
 export interface Takeaway {
   type?: 'meituan' | 'ele';
   shop?: string;
@@ -50,8 +46,25 @@ export interface TakeawayOCROptions {
    * 信息匹配未完全时，重新使用高精度，默认 true
    */
   fallbackAccurate?: boolean;
+  /**
+   * 需要匹配的字段，长度大于 0 时生效
+   */
   fields?: TakeawayField[];
+  /**
+   * 对店铺名进行自然语言比对，需开通这个服务
+   */
+  shopName?: string;
 }
+
+interface TakeawayCheckerContext extends TakeawayOCROptions {
+  nlp?: NLP;
+}
+
+export type TakeawayChecker = (
+  takeaway: Takeaway,
+  word: string,
+  context: TakeawayCheckerContext,
+) => TakeawayChecker | true | void | Promise<TakeawayChecker | true | void>;
 
 const CHECKER_DICT: {[key in TakeawayField]: TakeawayChecker} = {
   type: checkType,
@@ -65,6 +78,7 @@ const CHECKER_DICT: {[key in TakeawayField]: TakeawayChecker} = {
 
 export class TakeawayOCR {
   private ocr: OCR;
+  private nlp?: NLP;
   private options: Required<TakeawayOCROptions>;
 
   constructor(
@@ -79,8 +93,13 @@ export class TakeawayOCR {
       accurate: false,
       fallbackAccurate: true,
       fields: [],
+      shopName: '',
       ...options,
     };
+
+    if (this.options.shopName) {
+      this.nlp = new NLP(id, key, secret);
+    }
   }
 
   @lock
@@ -113,11 +132,16 @@ export class TakeawayOCR {
       (field: TakeawayField) => CHECKER_DICT[field],
     );
 
+    const checkerContext: TakeawayCheckerContext = {
+      ...this.options,
+      nlp: this.nlp,
+    };
+
     let nextCheckers: TakeawayChecker[] = [];
 
     let runCheckers = (word: string, checkers: TakeawayChecker[]): void => {
       for (let checker of checkers) {
-        let result = checker(defaultTakeaway, word);
+        let result = checker(defaultTakeaway, word, checkerContext);
 
         if (result === true) {
           return;

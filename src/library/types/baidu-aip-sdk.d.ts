@@ -8,5 +8,11 @@ declare module 'baidu-aip-sdk' {
     constructor(id: string, key: string, secret: string);
   }
 
-  export {ocr};
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  class nlp {
+    simnet: any;
+    constructor(id: string, key: string, secret: string);
+  }
+
+  export {ocr, nlp};
 }
