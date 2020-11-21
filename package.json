@@ -1,6 +1,6 @@
 {
   "name": "takeaway-ocr",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "license": "MIT",
   "author": "boenfu",
   "main": "bld/library/index.js",
