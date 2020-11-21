@@ -82,9 +82,9 @@ export class TakeawayOCR {
   private options: Required<TakeawayOCROptions>;
 
   constructor(
-    id: string,
-    key: string,
-    secret: string,
+    private id: string,
+    private key: string,
+    private secret: string,
     options?: TakeawayOCROptions,
   ) {
     this.ocr = new OCR(id, key, secret);
@@ -96,10 +96,6 @@ export class TakeawayOCR {
       shopName: '',
       ...options,
     };
-
-    if (this.options.shopName) {
-      this.nlp = new NLP(id, key, secret);
-    }
   }
 
   @lock
@@ -111,7 +107,12 @@ export class TakeawayOCR {
       accurate = this.options.accurate,
       fallbackAccurate = this.options.fallbackAccurate,
       fields,
+      shopName = this.options.shopName,
     } = options;
+
+    if (shopName && !this.nlp) {
+      this.nlp = new NLP(this.id, this.key, this.secret);
+    }
 
     const defaultTakeaway: Takeaway = fields?.length
       ? fields.reduce<Takeaway>((takeaway, field) => {
@@ -134,6 +135,7 @@ export class TakeawayOCR {
 
     const checkerContext: TakeawayCheckerContext = {
       ...this.options,
+      ...options,
       nlp: this.nlp,
     };
 
