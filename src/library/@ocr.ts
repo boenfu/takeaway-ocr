@@ -1,4 +1,5 @@
 import fs from 'fs';
+import http from 'http';
 
 import {ocr as AipOcrClient} from 'baidu-aip-sdk';
 
@@ -72,11 +73,9 @@ export class OCR {
   }
 
   private async accurate<TResult>(url: string): Promise<TResult> {
-    if (/^https?:\/\/([\w-]+.)+/.test(url)) {
-      return this.client.accurateBasicUrl(url);
-    }
-
-    let image = loadLocalImage(url);
+    let image = /^https?:\/\/([\w-]+.)+/.test(url)
+      ? await loadRemoteImage(url)
+      : loadLocalImage(url);
 
     return this.client.accurateBasic(image);
   }
@@ -121,6 +120,28 @@ export class OCR {
 
 function loadLocalImage(imagePath: string): string {
   return fs.readFileSync(imagePath).toString('base64');
+}
+
+function loadRemoteImage(imagePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    http.get(imagePath, function (res) {
+      let chunks: any[] = [];
+      let size = 0;
+
+      res.on('data', function (chunk) {
+        chunks.push(chunk);
+        size += chunk.length;
+      });
+      res.on('end', function (error: Error) {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(Buffer.concat(chunks, size).toString('base64'));
+      });
+    });
+  });
 }
 
 function logger(error: any): void {

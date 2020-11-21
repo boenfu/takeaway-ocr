@@ -4,7 +4,6 @@ declare module 'baidu-aip-sdk' {
     generalBasic: any;
     generalBasicUrl: any;
     accurateBasic: any;
-    accurateBasicUrl: any;
 
     constructor(id: string, key: string, secret: string);
   }

@@ -39,16 +39,29 @@ export interface Takeaway {
   score?: number;
 }
 
+export type TakeawayField = keyof Takeaway;
+
 export interface TakeawayOCROptions {
   /**
    * 使用高精度匹配，默认 false
    */
   accurate?: boolean;
   /**
-   * 信息匹配完全时，重新使用高精度，默认 true
+   * 信息匹配未完全时，重新使用高精度，默认 true
    */
   fallbackAccurate?: boolean;
+  fields?: TakeawayField[];
 }
+
+const CHECKER_DICT: {[key in TakeawayField]: TakeawayChecker} = {
+  type: checkType,
+  shop: checkShop,
+  order_id: checkOrderId,
+  order_date: checkOrderDate,
+  amount: checkAmount,
+  comment: checkComment,
+  score: checkScore,
+};
 
 export class TakeawayOCR {
   private ocr: OCR;
@@ -65,6 +78,7 @@ export class TakeawayOCR {
     this.options = {
       accurate: false,
       fallbackAccurate: true,
+      fields: [],
       ...options,
     };
   }
@@ -72,18 +86,32 @@ export class TakeawayOCR {
   @lock
   async match(
     urls: string[],
-    accurate = this.options.accurate,
-    fallbackAccurate = this.options.fallbackAccurate,
+    options: TakeawayOCROptions = {},
   ): Promise<Takeaway | undefined> {
-    const defaultTakeaway: Takeaway = {
-      type: undefined,
-      shop: undefined,
-      order_id: undefined,
-      order_date: undefined,
-      amount: undefined,
-      comment: undefined,
-      score: undefined,
-    };
+    let {
+      accurate = this.options.accurate,
+      fallbackAccurate = this.options.fallbackAccurate,
+      fields,
+    } = options;
+
+    const defaultTakeaway: Takeaway = fields?.length
+      ? fields.reduce<Takeaway>((takeaway, field) => {
+          takeaway[field] = undefined;
+          return takeaway;
+        }, {})
+      : {
+          type: undefined,
+          shop: undefined,
+          order_id: undefined,
+          order_date: undefined,
+          amount: undefined,
+          comment: undefined,
+          score: undefined,
+        };
+
+    const defaultCheckers = Object.keys(defaultTakeaway).map(
+      (field: TakeawayField) => CHECKER_DICT[field],
+    );
 
     let nextCheckers: TakeawayChecker[] = [];
 
@@ -121,16 +149,7 @@ export class TakeawayOCR {
           let checkers = [...nextCheckers];
           nextCheckers = [];
 
-          runCheckers(word, [
-            ...checkers,
-            checkType,
-            checkShop,
-            checkOrderId,
-            checkOrderDate,
-            checkAmount,
-            checkComment,
-            checkScore,
-          ]);
+          runCheckers(word, [...checkers, ...defaultCheckers]);
         }
       }
 
