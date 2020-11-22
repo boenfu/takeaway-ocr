@@ -9,7 +9,7 @@ const extraTextReg = (str: string): string =>
 export const checkShop: TakeawayChecker = async (
   takeaway,
   word,
-  {shopName, nlp},
+  {shopName, shopNameLimitScore, nlp},
 ) => {
   if (takeaway.shop) {
     return;
@@ -22,7 +22,7 @@ export const checkShop: TakeawayChecker = async (
       return;
     }
 
-    if ((await nlp.simnet(shopName, word)) > 0.9) {
+    if ((await nlp.simnet(shopName, word)) > shopNameLimitScore!) {
       takeaway.shop = shopName;
     }
   } else {

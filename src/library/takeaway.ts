@@ -5,6 +5,7 @@ import {OCR} from './@ocr';
 import {
   checkAmount,
   checkComment,
+  checkExtraText,
   checkOrderDate,
   checkOrderId,
   checkScore,
@@ -33,6 +34,7 @@ export interface Takeaway {
   amount?: number;
   comment?: string;
   score?: number;
+  extraTexts?: boolean[];
 }
 
 export type TakeawayField = keyof Takeaway;
@@ -54,6 +56,15 @@ export interface TakeawayOCROptions {
    * 对店铺名进行自然语言比对，需开通这个服务
    */
   shopName?: string;
+  /**
+   * 最低置信度: 0-1
+   * 默认值 0.9
+   */
+  shopNameLimitScore?: number;
+  /**
+   * 额外需要匹配的文本，将返回 boolean 数组
+   */
+  extraTexts?: string[];
 }
 
 interface TakeawayCheckerContext extends TakeawayOCROptions {
@@ -74,6 +85,7 @@ const CHECKER_DICT: {[key in TakeawayField]: TakeawayChecker} = {
   amount: checkAmount,
   comment: checkComment,
   score: checkScore,
+  extraTexts: checkExtraText,
 };
 
 export class TakeawayOCR {
@@ -94,6 +106,8 @@ export class TakeawayOCR {
       fallbackAccurate: true,
       fields: [],
       shopName: '',
+      shopNameLimitScore: 0.9,
+      extraTexts: [],
       ...options,
     };
   }
@@ -108,12 +122,16 @@ export class TakeawayOCR {
       fallbackAccurate = this.options.fallbackAccurate,
       fields,
       shopName = this.options.shopName,
+      extraTexts = this.options.extraTexts,
     } = options;
 
     if (shopName && !this.nlp) {
       this.nlp = new NLP(this.id, this.key, this.secret);
     }
 
+    const defaultExtraTexts = extraTexts?.length
+      ? extraTexts.map(() => false)
+      : undefined;
     const defaultTakeaway: Takeaway = fields?.length
       ? fields.reduce<Takeaway>((takeaway, field) => {
           takeaway[field] = undefined;
@@ -128,6 +146,10 @@ export class TakeawayOCR {
           comment: undefined,
           score: undefined,
         };
+
+    if (defaultExtraTexts) {
+      defaultTakeaway.extraTexts = defaultExtraTexts;
+    }
 
     const defaultCheckers = Object.keys(defaultTakeaway).map(
       (field: TakeawayField) => CHECKER_DICT[field],
