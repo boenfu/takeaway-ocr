@@ -18,10 +18,6 @@ export const checkShop: TakeawayChecker = async (
   if (shopName && nlp) {
     // nlp 模式
 
-    if (Math.abs(shopName.length - word.length) > shopName.length / 2) {
-      return;
-    }
-
     if ((await nlp.simnet(shopName, word)) > shopNameLimitScore!) {
       takeaway.shop = shopName;
     }
