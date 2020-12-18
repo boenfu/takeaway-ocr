@@ -1,5 +1,3 @@
-import * as v from 'villa';
-
 import {NLP} from './@nlp';
 import {OCR} from './@ocr';
 import {
@@ -11,20 +9,10 @@ import {
   checkScore,
   checkShop,
   checkType,
+  lock,
 } from './@utils';
 
-function lock(
-  target: any,
-  propertyKey: string,
-  descriptor: PropertyDescriptor,
-): void {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  let fn: Function = target[propertyKey];
-
-  descriptor.value = async function (...args: any[]) {
-    return v.lock(TakeawayOCR.name, fn.bind(this, ...args));
-  };
-}
+const QPS_DEFAULT = 2;
 
 export interface Takeaway {
   type?: 'meituan' | 'ele';
@@ -38,6 +26,11 @@ export interface Takeaway {
 }
 
 export type TakeawayField = keyof Takeaway;
+
+export interface TakeawayQPS {
+  ocr?: number;
+  nlp?: number;
+}
 
 export interface TakeawayOCROptions {
   /**
@@ -65,6 +58,10 @@ export interface TakeawayOCROptions {
    * 额外需要匹配的文本，将返回 boolean 数组
    */
   extraTexts?: string[];
+  /**
+   * 每秒并发量, 默认都为个人用户 qps 为 2
+   */
+  qps?: number | TakeawayQPS;
 }
 
 interface TakeawayCheckerContext extends TakeawayOCROptions {
@@ -99,8 +96,6 @@ export class TakeawayOCR {
     private secret: string,
     options?: TakeawayOCROptions,
   ) {
-    this.ocr = new OCR(id, key, secret);
-
     this.options = {
       accurate: false,
       fallbackAccurate: true,
@@ -109,7 +104,14 @@ export class TakeawayOCR {
       shopNameLimitScore: 0.9,
       extraTexts: [],
       ...options,
+      qps: options?.qps
+        ? typeof options.qps === 'number'
+          ? {ocr: options.qps, nlp: options.qps}
+          : options.qps
+        : {ocr: QPS_DEFAULT, nlp: QPS_DEFAULT},
     };
+
+    this.ocr = new OCR(id, key, secret, (this.options.qps as TakeawayQPS).ocr!);
   }
 
   @lock
@@ -126,7 +128,12 @@ export class TakeawayOCR {
     } = options;
 
     if (shopName && !this.nlp) {
-      this.nlp = new NLP(this.id, this.key, this.secret);
+      this.nlp = new NLP(
+        this.id,
+        this.key,
+        this.secret,
+        (this.options.qps as TakeawayQPS).nlp!,
+      );
     }
 
     const defaultExtraTexts = extraTexts?.length
@@ -163,9 +170,12 @@ export class TakeawayOCR {
 
     let nextCheckers: TakeawayChecker[] = [];
 
-    let runCheckers = (word: string, checkers: TakeawayChecker[]): void => {
+    let runCheckers = async (
+      word: string,
+      checkers: TakeawayChecker[],
+    ): Promise<void> => {
       for (let checker of checkers) {
-        let result = checker(defaultTakeaway, word, checkerContext);
+        let result = await checker(defaultTakeaway, word, checkerContext);
 
         if (result === true) {
           return;
@@ -197,7 +207,7 @@ export class TakeawayOCR {
           let checkers = [...nextCheckers];
           nextCheckers = [];
 
-          runCheckers(word, [...checkers, ...defaultCheckers]);
+          await runCheckers(word, [...checkers, ...defaultCheckers]);
         }
       }
 

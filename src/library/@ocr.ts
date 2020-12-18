@@ -3,7 +3,7 @@ import http from 'http';
 
 import {ocr as AipOcrClient} from 'baidu-aip-sdk';
 
-import {logger} from './@utils';
+import {logger, qps} from './@utils';
 
 export interface OCRGetOptions {
   type: 'general' | 'accurate';
@@ -16,7 +16,7 @@ export interface OCRGetOptions {
 export class OCR {
   private client: AipOcrClient;
 
-  constructor(id: string, key: string, secret: string) {
+  constructor(id: string, key: string, secret: string, readonly qps: number) {
     this.client = new AipOcrClient(id, key, secret);
   }
 
@@ -64,6 +64,7 @@ export class OCR {
     }
   }
 
+  @qps('ocr-general')
   private async general<TResult>(url: string): Promise<TResult> {
     if (/^https?:\/\/([\w-]+.)+/.test(url)) {
       return this.client.generalBasicUrl(url);
@@ -74,6 +75,7 @@ export class OCR {
     return this.client.generalBasic(image);
   }
 
+  @qps('ocr-accurate')
   private async accurate<TResult>(url: string): Promise<TResult> {
     let image = /^https?:\/\/([\w-]+.)+/.test(url)
       ? await loadRemoteImage(url)
