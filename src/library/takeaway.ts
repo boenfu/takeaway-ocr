@@ -86,8 +86,9 @@ const CHECKER_DICT: {[key in TakeawayField]: TakeawayChecker} = {
 };
 
 export class TakeawayOCR {
-  private ocr: OCR;
-  private nlp?: NLP;
+  ocr: OCR;
+  nlp?: NLP;
+
   private options: Required<TakeawayOCROptions>;
 
   constructor(
