@@ -2,6 +2,7 @@ import {TakeawayChecker} from '../takeaway';
 
 const IDReg = /^[0-9]+复制$/;
 const IDReg2 = /^订单号码[0-9]+$/;
+const IDReg3 = /^订单号码[0-9]+复制$/;
 
 export const checkOrderId: TakeawayChecker = (takeaway, word) => {
   if (takeaway.order_id) {
@@ -12,6 +13,8 @@ export const checkOrderId: TakeawayChecker = (takeaway, word) => {
     takeaway.order_id = word.slice(0, -2);
   } else if (IDReg2.test(word)) {
     takeaway.order_id = word.slice(4);
+  } else if (IDReg3.test(word)) {
+    takeaway.order_id = word.slice(4, -2);
   }
 };
 
